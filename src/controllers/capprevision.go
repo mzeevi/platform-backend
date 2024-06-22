@@ -3,7 +3,6 @@ package controllers
 import (
 	"context"
 	"fmt"
-
 	"github.com/dana-team/container-app-operator/api/v1alpha1"
 	"github.com/dana-team/platform-backend/src/types"
 	"go.uber.org/zap"
@@ -49,9 +48,13 @@ func (c *cappRevisionController) GetCappRevisions(namespace string, cappQuery ty
 	c.logger.Debug(fmt.Sprintf("Trying to fetch all capp revisions in namespace: %q", namespace))
 
 	cappRevisionList := &v1alpha1.CappRevisionList{}
-	selector, err := metav1.LabelSelectorAsSelector(&metav1.LabelSelector{
-		MatchLabels: convertKeyValueToMap(cappQuery.Labels),
-	})
+	labels, err := parseLabelSelector(cappQuery.LabelSelector)
+	if err != nil {
+		c.logger.Error(fmt.Sprintf("Could not parse labels: %v", err.Error()))
+		return types.CappRevisionList{}, err
+	}
+
+	selector, err := metav1.LabelSelectorAsSelector(&metav1.LabelSelector{MatchLabels: labels})
 	if err != nil {
 		c.logger.Error(fmt.Sprintf("Could not create label selector with error: %v", err.Error()))
 		return types.CappRevisionList{}, err

@@ -1,6 +1,42 @@
 package controllers
 
-import "github.com/dana-team/platform-backend/src/types"
+import (
+	"fmt"
+	"github.com/dana-team/platform-backend/src/types"
+	k8serrors "k8s.io/apimachinery/pkg/api/errors"
+	"regexp"
+	"strings"
+)
+
+// checkLabelSelectorFormat checks if the input string is in the format "a=b,c=d,e=f".
+func checkLabelSelectorFormat(labelSelector string) bool {
+	pattern := `^([^\s=,]+)=([^\s=,]+)(,([^\s=,]+)=([^\s=,]+))*$`
+	re := regexp.MustCompile(pattern)
+	return re.MatchString(labelSelector)
+}
+
+// parseLabelSelector parses the label selector into a map of key-value pairs.
+func parseLabelSelector(labelSelector string) (map[string]string, error) {
+	if len(labelSelector) == 0 {
+		return nil, nil
+	}
+
+	if !checkLabelSelectorFormat(labelSelector) {
+		return nil, k8serrors.NewBadRequest(fmt.Sprintf("format of labelSelector %q is invalid, must be of fomat 'a=b,c=d,e=f'", labelSelector))
+	}
+
+	pairs := strings.Split(labelSelector, ",")
+	labels := make(map[string]string, len(pairs))
+	for _, pair := range pairs {
+		kv := strings.Split(pair, "=")
+		if len(kv) != 2 {
+			return nil, k8serrors.NewBadRequest(fmt.Sprintf("format of key-value pair %q is invalid, must of format 'a=b'", pair))
+		}
+		labels[kv[0]] = kv[1]
+	}
+
+	return labels, nil
+}
 
 // convertKeyValueToMap converts a slice of KeyValue pairs to a map
 // with string keys and values.
