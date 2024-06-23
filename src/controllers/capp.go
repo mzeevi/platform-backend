@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/dana-team/platform-backend/src/utils"
+	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/labels"
 
 	"github.com/dana-team/container-app-operator/api/v1alpha1"
@@ -93,7 +94,7 @@ func (c *cappController) GetCapps(namespace string, cappQuery types.CappQuery) (
 	selector, err := labels.Parse(cappQuery.LabelSelector)
 	if err != nil {
 		c.logger.Error(fmt.Sprintf("Could not parse labelSelector with error: %v", err.Error()))
-		return types.CappList{}, err
+		return types.CappList{}, k8serrors.NewBadRequest(err.Error())
 	}
 
 	err = c.client.List(c.ctx, cappList, &client.ListOptions{
@@ -107,7 +108,7 @@ func (c *cappController) GetCapps(namespace string, cappQuery types.CappQuery) (
 
 	result := types.CappList{}
 	for _, item := range cappList.Items {
-		result.Capps = append(result.Capps, convertCappToType(item))
+		result.Capps = append(result.Capps, item.Name)
 	}
 	result.Count = len(cappList.Items)
 	return result, nil

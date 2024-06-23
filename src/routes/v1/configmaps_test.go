@@ -75,7 +75,8 @@ func TestGetConfigMap(t *testing.T) {
 	for name, test := range cases {
 		t.Run(name, func(t *testing.T) {
 			baseURI := fmt.Sprintf("/v1/namespaces/%s/configmaps/%s", test.requestParams.namespace, test.requestParams.name)
-			request, _ := http.NewRequest("GET", baseURI, nil)
+			request, err := http.NewRequest(http.MethodGet, baseURI, nil)
+			assert.NoError(t, err)
 			writer := httptest.NewRecorder()
 			router.ServeHTTP(writer, request)
 
@@ -83,11 +84,9 @@ func TestGetConfigMap(t *testing.T) {
 
 			if writer.Code == http.StatusOK {
 				var response types.ConfigMap
-				if err := json.Unmarshal(writer.Body.Bytes(), &response); err != nil {
-					panic(err)
-				}
-
-				assert.Equal(t, test.want.response.Data, response.Data)
+				err = json.Unmarshal(writer.Body.Bytes(), &response)
+				assert.NoError(t, err)
+				assert.Equal(t, test.want.response, response)
 			}
 		})
 	}

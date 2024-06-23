@@ -24,16 +24,48 @@ func GetStubCappRevision(name, namespace string, labels, annotations map[string]
 }
 
 // GetStubCappRevisionType returns a CappRevision type object.
-func GetStubCappRevisionType(name, namespace string, labels, annotations []types.KeyValue) types.CappRevision {
+func GetStubCappRevisionType(name, namespace string, labels, annotations map[string]string) types.CappRevision {
 	cappRevision := types.CappRevision{
-		Annotations: annotations,
-		Labels:      labels,
+		Annotations: ConvertMapToKeyValue(annotations),
+		Labels:      ConvertMapToKeyValue(labels),
 		Metadata: types.Metadata{
 			Name:      name,
 			Namespace: namespace,
 		},
 		Spec:   cappv1alpha1.CappRevisionSpec{},
 		Status: cappv1alpha1.CappRevisionStatus{},
+	}
+
+	return cappRevision
+}
+
+// GetStubCapp returns a Capp object with only ObjectMeta set.
+func GetStubCapp(name, namespace string, labels, annotations map[string]string) cappv1alpha1.Capp {
+	cappRevision := cappv1alpha1.Capp{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:        name,
+			Namespace:   namespace,
+			Annotations: annotations,
+			Labels:      labels,
+		},
+		Spec:   cappv1alpha1.CappSpec{},
+		Status: cappv1alpha1.CappStatus{},
+	}
+
+	return cappRevision
+}
+
+// GetStubCappType returns a Capp type object.
+func GetStubCappType(name, namespace string, labels, annotations map[string]string) types.Capp {
+	cappRevision := types.Capp{
+		Annotations: ConvertMapToKeyValue(annotations),
+		Labels:      ConvertMapToKeyValue(labels),
+		Metadata: types.Metadata{
+			Name:      name,
+			Namespace: namespace,
+		},
+		Spec:   cappv1alpha1.CappSpec{},
+		Status: cappv1alpha1.CappStatus{},
 	}
 
 	return cappRevision

@@ -26,17 +26,22 @@ var (
 )
 
 const (
-	testNamespace = "test-namespace"
-	testName      = "test"
+	testNamespace    = "test-namespace"
+	testName         = "test"
+	labelSelectorKey = "labelSelector"
+	labelKey         = "key"
+	labelValue       = "value"
+	contentType      = "Content-Type"
+	applicationJson  = "application/json"
 )
 
 func TestMain(m *testing.M) {
 	setup()
 	createTestSecret()
 	createTestNamespace(testNamespace)
+	setupCapps()
 	setupCappRevisions()
 	setupConfigMap()
-	createTestCapp()
 	m.Run()
 }
 
@@ -130,23 +135,6 @@ func createTestSecret() {
 		},
 	}
 	_, err := client.CoreV1().Secrets("default").Create(context.TODO(), secret, metav1.CreateOptions{})
-	if err != nil {
-		panic(err)
-	}
-}
-
-func createTestCapp() {
-	capp := cappv1.Capp{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:        "test-capp",
-			Namespace:   "test-namespace",
-			Annotations: map[string]string{},
-			Labels:      map[string]string{},
-		},
-		Spec:   cappv1.CappSpec{},
-		Status: cappv1.CappStatus{},
-	}
-	err := dynClient.Create(context.TODO(), &capp)
 	if err != nil {
 		panic(err)
 	}

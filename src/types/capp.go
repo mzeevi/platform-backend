@@ -6,16 +6,16 @@ import (
 
 type Capp struct {
 	Metadata    Metadata                `json:"metadata" binding:"required"`
-	Annotations []KeyValue              `json:"annotations" binding:"required"`
-	Labels      []KeyValue              `json:"labels" binding:"required"`
+	Annotations []KeyValue              `json:"annotations"`
+	Labels      []KeyValue              `json:"labels"`
 	Spec        cappv1alpha1.CappSpec   `json:"spec" binding:"required"`
 	Status      cappv1alpha1.CappStatus `json:"status" binding:"required"`
 }
 
 type CreateCapp struct {
 	Metadata    CreateMetadata        `json:"metadata" binding:"required"`
-	Annotations []KeyValue            `json:"annotations" binding:"required"`
-	Labels      []KeyValue            `json:"labels" binding:"required"`
+	Annotations []KeyValue            `json:"annotations"`
+	Labels      []KeyValue            `json:"labels"`
 	Spec        cappv1alpha1.CappSpec `json:"spec" binding:"required"`
 }
 
@@ -34,8 +34,8 @@ type CappQuery struct {
 }
 
 type CappList struct {
-	Capps []Capp `json:"capps"`
-	Count int    `json:"count"`
+	Capps []string `json:"capps"`
+	Count int      `json:"count"`
 }
 
 type CappNamespaceUri struct {
