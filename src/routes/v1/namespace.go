@@ -42,7 +42,7 @@ func namespaceHandler(handler func(controller controllers.NamespaceController, c
 	}
 }
 
-func ListNamespaces() gin.HandlerFunc {
+func GetNamespaces() gin.HandlerFunc {
 	return namespaceHandler(func(controller controllers.NamespaceController, c *gin.Context) (interface{}, error) {
 		return controller.GetNamespaces()
 	})
@@ -83,7 +83,7 @@ func DeleteNamespace() gin.HandlerFunc {
 
 		namespaceHandler(func(controller controllers.NamespaceController, c *gin.Context) (interface{}, error) {
 			name := namespaceUri.NamespaceName
-			message := fmt.Sprintf("Deleted namespace successfully %s", name)
+			message := fmt.Sprintf("Deleted namespace successfully %q", name)
 			return gin.H{"message": message}, controller.DeleteNamespace(name)
 		})(c)
 	}

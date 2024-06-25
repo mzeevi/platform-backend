@@ -21,7 +21,7 @@ const (
 	configValue        = "value"
 )
 
-func setupConfigMap() {
+func setupConfigMaps() {
 	createTestNamespace(configMapNamespace)
 	createTestConfigMap(configMapName+"-1", configMapNamespace)
 }

@@ -2,6 +2,7 @@ package v1_test
 
 import (
 	"context"
+	"github.com/dana-team/platform-backend/src/routes/mocks"
 	"testing"
 
 	rbacv1 "k8s.io/api/rbac/v1"
@@ -38,10 +39,10 @@ const (
 func TestMain(m *testing.M) {
 	setup()
 	createTestSecret()
-	createTestNamespace(testNamespace)
+	setupNamespaces()
 	setupCapps()
 	setupCappRevisions()
-	setupConfigMap()
+	setupConfigMaps()
 	m.Run()
 }
 
@@ -64,7 +65,7 @@ func setupRouter(logger *zap.Logger) *gin.Engine {
 	{
 		namespacesGroup := v1.Group("/namespaces")
 		{
-			namespacesGroup.GET("/", routev1.ListNamespaces())
+			namespacesGroup.GET("/", routev1.GetNamespaces())
 			namespacesGroup.GET("/:namespaceName", routev1.GetNamespace())
 			namespacesGroup.POST("/", routev1.CreateNamespace())
 			namespacesGroup.DELETE("/:namespaceName", routev1.DeleteNamespace())
@@ -111,13 +112,10 @@ func setupRouter(logger *zap.Logger) *gin.Engine {
 	return engine
 }
 
+// createTestNamespace a creates a test Namespace object.
 func createTestNamespace(name string) {
-	namespace := &corev1.Namespace{
-		ObjectMeta: metav1.ObjectMeta{
-			Name: name,
-		},
-	}
-	_, err := client.CoreV1().Namespaces().Create(context.TODO(), namespace, metav1.CreateOptions{})
+	namespace := mocks.GetNamespace(name)
+	_, err := client.CoreV1().Namespaces().Create(context.TODO(), &namespace, metav1.CreateOptions{})
 	if err != nil {
 		panic(err)
 	}
