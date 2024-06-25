@@ -1,10 +1,11 @@
 package v1_test
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/dana-team/platform-backend/src/routes/mocks"
 	"github.com/dana-team/platform-backend/src/types"
-	"github.com/dana-team/platform-backend/src/utils"
 	"github.com/stretchr/testify/assert"
 	"net/http"
 	"net/http/httptest"
@@ -15,15 +16,21 @@ import (
 const (
 	cappRevisionNamespace = testName + "-capp-revision-ns"
 	cappRevisionName      = testName + "-capp-revision"
-	labelSelectorKey      = "labelSelector"
-	labelKey              = "key"
-	labelValue            = "value"
 )
 
 func setupCappRevisions() {
 	createTestNamespace(cappRevisionNamespace)
-	createTestCappRevision(cappRevisionName+"-1", cappRevisionNamespace, map[string]string{labelKey + "-1": labelValue + "-1"}, map[string]string{})
-	createTestCappRevision(cappRevisionName+"-2", cappRevisionNamespace, map[string]string{labelKey + "-2": labelValue + "-2"}, map[string]string{})
+	createTestCappRevision(cappRevisionName+"-1", cappRevisionNamespace, map[string]string{labelKey + "-1": labelValue + "-1"}, nil)
+	createTestCappRevision(cappRevisionName+"-2", cappRevisionNamespace, map[string]string{labelKey + "-2": labelValue + "-2"}, nil)
+}
+
+// createTestCappRevision creates a test CappRevision object.
+func createTestCappRevision(name, namespace string, labels, annotations map[string]string) {
+	cappRevision := mocks.GetCappRevision(name, namespace, labels, annotations)
+	err := dynClient.Create(context.TODO(), &cappRevision)
+	if err != nil {
+		panic(err)
+	}
 }
 
 func TestGetCappRevisions(t *testing.T) {
@@ -114,8 +121,8 @@ func TestGetCappRevisions(t *testing.T) {
 			}
 
 			baseURI := fmt.Sprintf("/v1/namespaces/%s/capprevisions/", test.requestParams.namespace)
-
-			request, _ := http.NewRequest("GET", fmt.Sprintf("%s?%s", baseURI, params.Encode()), nil)
+			request, err := http.NewRequest(http.MethodGet, fmt.Sprintf("%s?%s", baseURI, params.Encode()), nil)
+			assert.NoError(t, err)
 			writer := httptest.NewRecorder()
 			router.ServeHTTP(writer, request)
 
@@ -123,12 +130,9 @@ func TestGetCappRevisions(t *testing.T) {
 
 			if writer.Code == http.StatusOK {
 				var response types.CappRevisionList
-				if err := json.Unmarshal(writer.Body.Bytes(), &response); err != nil {
-					panic(err)
-				}
-
-				assert.Equal(t, test.want.response.Count, response.Count)
-				assert.Equal(t, test.want.response.CappRevisions, response.CappRevisions)
+				err = json.Unmarshal(writer.Body.Bytes(), &response)
+				assert.NoError(t, err)
+				assert.Equal(t, test.want.response, response)
 			}
 		})
 	}
@@ -156,13 +160,14 @@ func TestGetCappRevision(t *testing.T) {
 			},
 			want: want{
 				statusCode: http.StatusOK,
-				response: utils.GetBareCappRevisionType(cappRevisionName+"-1", cappRevisionNamespace,
-					[]types.KeyValue{{Key: "key1", Value: "value-1"}}, []types.KeyValue{}),
+				response: mocks.GetCappRevisionType(cappRevisionName+"-1", cappRevisionNamespace,
+					map[string]string{labelKey + "-1": labelValue + "-1"}, nil),
 			},
 		},
 		"ShouldFailWithBadRequestInvalidURI": {
 			requestParams: requestParams{
 				namespace: "",
+				name:      cappRevisionName + "-1",
 			},
 			want: want{
 				statusCode: http.StatusBadRequest,
@@ -174,7 +179,8 @@ func TestGetCappRevision(t *testing.T) {
 	for name, test := range cases {
 		t.Run(name, func(t *testing.T) {
 			baseURI := fmt.Sprintf("/v1/namespaces/%s/capprevisions/%s", test.requestParams.namespace, test.requestParams.name)
-			request, _ := http.NewRequest("GET", baseURI, nil)
+			request, err := http.NewRequest(http.MethodGet, baseURI, nil)
+			assert.NoError(t, err)
 			writer := httptest.NewRecorder()
 			router.ServeHTTP(writer, request)
 
@@ -182,12 +188,9 @@ func TestGetCappRevision(t *testing.T) {
 
 			if writer.Code == http.StatusOK {
 				var response types.CappRevision
-				if err := json.Unmarshal(writer.Body.Bytes(), &response); err != nil {
-					panic(err)
-				}
-
-				assert.Equal(t, test.want.response.Metadata.Name, response.Metadata.Name)
-				assert.Equal(t, test.want.response.Metadata.Namespace, response.Metadata.Namespace)
+				err = json.Unmarshal(writer.Body.Bytes(), &response)
+				assert.NoError(t, err)
+				assert.Equal(t, test.want.response, response)
 			}
 		})
 	}
